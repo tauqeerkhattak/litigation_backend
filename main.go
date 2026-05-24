@@ -2,6 +2,7 @@ package main
 
 import (
 	"litigation_backend/config"
+	"litigation_backend/routes"
 	"log"
 	"os"
 
@@ -28,4 +29,22 @@ func main() {
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
+	e.Use(
+		middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOriginFunc: func(origin string) (bool, error) {
+				return true, nil
+			},
+			AllowHeaders: []string{"Origin", "Content-Type", "Authorization", "ngrok-skip-browser-warning"},
+		}),
+	)
+
+	router := e.Group("/api/v1")
+	routes.SetupRoutes(router)
+
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	host := os.Getenv("HOST_URL")
+	e.Logger.Fatal(e.Start(host + ":" + port))
 }
