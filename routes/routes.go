@@ -8,4 +8,8 @@ import (
 
 func SetupRoutes(e *echo.Group) {
 	e.POST("/test-whatsapp", controllers.TestWhatsapp)
+	admin := e.Group("/admin")
+	{
+		admin.POST("/login", controllers.AdminLogin)
+	}
 }

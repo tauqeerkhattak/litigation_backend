@@ -3,12 +3,17 @@ package main
 import (
 	"litigation_backend/config"
 	"litigation_backend/routes"
+	"litigation_backend/services"
+	"litigation_backend/utils"
 	"log"
 	"os"
+	"time"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/robfig/cron/v3"
 )
 
 func main() {
@@ -29,6 +34,7 @@ func main() {
 
 	e.Use(middleware.RequestLogger())
 	e.Use(middleware.Recover())
+	e.Binder = &utils.CustomBinder{Validator: validator.New(validator.WithRequiredStructEnabled())}
 	e.Use(
 		middleware.CORSWithConfig(middleware.CORSConfig{
 			AllowOriginFunc: func(origin string) (bool, error) {
@@ -46,5 +52,12 @@ func main() {
 		port = "8080"
 	}
 	host := os.Getenv("HOST_URL")
+	cronJob := cron.New()
+	cronJob.AddFunc("0 8 * * *", func() {
+		log.Println("Running at: ", time.Now())
+		services.TestWhatsapp()
+	})
+	cronJob.Start()
+	log.Println("CronJob started!")
 	e.Logger.Fatal(e.Start(host + ":" + port))
 }
