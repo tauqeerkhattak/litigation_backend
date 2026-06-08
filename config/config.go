@@ -6,10 +6,12 @@ import (
 
 	"cloud.google.com/go/firestore"
 	firebase "firebase.google.com/go/v4"
+	"firebase.google.com/go/v4/auth"
 	"firebase.google.com/go/v4/messaging"
 )
 
 var Firestore *firestore.Client
+var Auth *auth.Client
 var MessagingClient *messaging.Client
 
 func Init() error {
@@ -28,6 +30,11 @@ func Init() error {
 	if err != nil {
 		return err
 	}
+	authClient, err := app.Auth(context.Background())
+	if err != nil {
+		return err
+	}
+	Auth = authClient
 	MessagingClient = messagingClient
 	Firestore = client
 	fmt.Println("Firestore created")
