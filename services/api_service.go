@@ -1,6 +1,9 @@
 package services
 
 import (
+	"context"
+	"litigation_backend/config"
+	"litigation_backend/models/requests"
 	"litigation_backend/models/responses"
 	"log"
 	"net/http"
@@ -8,8 +11,11 @@ import (
 	"strings"
 	"time"
 
+	"firebase.google.com/go/v4/auth"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/labstack/echo/v4"
+	"github.com/wneessen/go-mail"
+	"google.golang.org/api/iterator"
 )
 
 func GenerateJWTToken() (*string, error) {
@@ -67,4 +73,80 @@ func TestWhatsapp() error {
 	}
 	log.Println("RESPONSE: ", response)
 	return nil
+}
+
+func GetAllUsers(pageToken string) ([]*auth.ExportedUserRecord, string) {
+	users := make([]*auth.ExportedUserRecord, 0)
+	iter := config.Auth.Users(context.Background(), pageToken)
+	for {
+		user, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			log.Println("ERROR: ", user)
+		}
+		users = append(users, user)
+	}
+	return users, iter.PageInfo().Token
+}
+
+func CreateUser(request *requests.CreateUserRequest) (*auth.UserRecord, error) {
+	userToCreate := (&auth.UserToCreate{})
+	userToCreate.Email(request.Email)
+	userToCreate.Password(request.Password)
+	userToCreate.DisplayName(request.Name)
+	user, err := config.Auth.CreateUser(context.Background(), userToCreate)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func DisableUser(uid string) (*auth.UserRecord, error) {
+	userToUpdate := (&auth.UserToUpdate{}).Disabled(true)
+	return config.Auth.UpdateUser(context.Background(), uid, userToUpdate)
+}
+
+func ForgotPasswordUser(uid string) (*string, error) {
+	user, err := config.Auth.GetUser(context.Background(), uid)
+	if err != nil {
+		return nil, err
+	}
+	link, err := config.Auth.PasswordResetLink(context.Background(), user.Email)
+	if err != nil {
+		return nil, err
+	}
+	log.Printf("email=%s password_len=%d",
+		os.Getenv("SMTP_EMAIL"),
+		len(os.Getenv("SMTP_PASSWORD")),
+	)
+	message := mail.NewMsg()
+	if err := message.From(os.Getenv("SMTP_EMAIL")); err != nil {
+		return nil, err
+	}
+	if err := message.To(user.Email); err != nil {
+		return nil, err
+	}
+	message.Subject("Password Reset Email")
+	message.SetBodyString(mail.TypeTextHTML,
+		`<h1>LITIGATION MANAGEMENT</h1>
+    <p>Use the following link to reset your password:</p>
+    <p><a href="`+link+`">Reset Password</a></p>`,
+	)
+	client, err := mail.NewClient("smtp.gmail.com",
+		mail.WithPort(587),
+		mail.WithTLSPolicy(mail.TLSMandatory),
+		mail.WithSMTPAuth(mail.SMTPAuthPlain),
+		mail.WithUsername(os.Getenv("SMTP_EMAIL")),
+		mail.WithPassword(os.Getenv("SMTP_PASSWORD")),
+	)
+	if err != nil {
+		return nil, err
+	}
+	if err := client.DialAndSend(message); err != nil {
+		log.Println("ERROR: ", err)
+		return nil, err
+	}
+	return &user.Email, nil
 }

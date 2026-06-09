@@ -1,17 +1,12 @@
 package controllers
 
 import (
-	"context"
-	"litigation_backend/config"
 	"litigation_backend/models/requests"
 	"litigation_backend/models/responses"
 	"litigation_backend/services"
-	"log"
 	"os"
 
-	"firebase.google.com/go/v4/auth"
 	"github.com/labstack/echo/v4"
-	"google.golang.org/api/iterator"
 )
 
 func TestWhatsapp(c echo.Context) error {
@@ -51,20 +46,42 @@ func AdminLogin(c echo.Context) error {
 }
 
 func GetAllUsers(c echo.Context) error {
-	users := make([]*auth.ExportedUserRecord, 0)
-	iter := config.Auth.Users(context.Background(), "")
-	for {
-		user, err := iter.Next()
-		if err == iterator.Done {
-			break
-		}
-		if err != nil {
-			log.Println("ERROR: ", user)
-		}
-		users = append(users, user)
-	}
+	pageToken := c.QueryParam("page_token")
+	users, pageToken := services.GetAllUsers(pageToken)
 	return c.JSON(200, echo.Map{
-		"status": "success",
-		"users":  users,
+		"status":          "success",
+		"users":           users,
+		"next_page_token": pageToken,
 	})
+}
+
+func CreateUser(c echo.Context) error {
+	var request requests.CreateUserRequest
+	err := c.Bind(&request)
+	if err != nil {
+		return responses.ErrorResponse(c, 400, err.Error())
+	}
+	user, err := services.CreateUser(&request)
+	if err != nil {
+		return responses.ErrorResponse(c, 500, err.Error())
+	}
+	return responses.SuccessResponse(c, user)
+}
+
+func DisableUser(c echo.Context) error {
+	uid := c.Param("uid")
+	user, err := services.DisableUser(uid)
+	if err != nil {
+		return responses.ErrorResponse(c, 500, err.Error())
+	}
+	return responses.SuccessResponse(c, user)
+}
+
+func ForgotPasswordUser(c echo.Context) error {
+	uid := c.Param("uid")
+	email, err := services.ForgotPasswordUser(uid)
+	if err != nil {
+		return responses.ErrorResponse(c, 500, err.Error())
+	}
+	return responses.SuccessResponse(c, "Email send to: "+*email)
 }

@@ -14,7 +14,13 @@ func SetupRoutes(e *echo.Group) {
 		admin.POST("/login", controllers.AdminLogin)
 		authAdmin := admin.Group("", services.VerifyJWTToken)
 		{
-			authAdmin.GET("/users", controllers.GetAllUsers)
+			users := authAdmin.Group("/users")
+			{
+				users.GET("", controllers.GetAllUsers)
+				users.POST("/create", controllers.CreateUser)
+				users.DELETE("/:uid", controllers.DisableUser)
+				users.POST("/:uid/forgot-password", controllers.ForgotPasswordUser)
+			}
 		}
 	}
 }
