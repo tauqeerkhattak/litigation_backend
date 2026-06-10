@@ -50,7 +50,7 @@ func GetAllUsers(c echo.Context) error {
 	if err != nil {
 		return responses.ErrorResponse(c, 500, err.Error())
 	}
-	return c.JSON(200, users)
+	return responses.SuccessResponse(c, users)
 }
 
 func CreateUser(c echo.Context) error {

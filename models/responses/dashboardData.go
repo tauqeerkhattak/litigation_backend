@@ -1,8 +1,8 @@
 package responses
 
 type DashboardData struct {
-	ActiveCases   int `json:"active_cases"`
-	HearingsToday int `json:"hearings_today"`
-	TotalUsers    int `json:"total_users"`
-	UrgentTasks   int `json:"urgent_tasks"`
+	ActiveCases   int64 `json:"active_cases"`
+	HearingsToday int64 `json:"hearings_today"`
+	TotalUsers    int64 `json:"total_users"`
+	UrgentTasks   int64 `json:"urgent_tasks"`
 }

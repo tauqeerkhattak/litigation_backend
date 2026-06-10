@@ -6,6 +6,8 @@ import (
 	"litigation_backend/models/requests"
 	"litigation_backend/models/responses"
 	"time"
+
+	"cloud.google.com/go/firestore/apiv1/firestorepb"
 )
 
 func CreateUserInDb(uid string, request *requests.CreateUserRequest) (*responses.User, error) {
@@ -62,22 +64,24 @@ func GetUserByUid(uid string) (*responses.User, error) {
 	return &user, nil
 }
 
-func GetUserCount() (*int, error) {
+func GetUserCount() (*int64, error) {
 	query := config.Firestore.Collection("users").NewAggregationQuery().WithCount("count")
 	data, err := query.Get(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	count := data["count"].(int)
+	value := data["count"].(*firestorepb.Value)
+	count := value.GetIntegerValue()
 	return &count, nil
 }
 
-func GetCasesCount() (*int, error) {
+func GetCasesCount() (*int64, error) {
 	query := config.Firestore.Collection("cases").NewAggregationQuery().WithCount("count")
 	data, err := query.Get(context.Background())
 	if err != nil {
 		return nil, err
 	}
-	count := data["count"].(int)
+	value := data["count"].(*firestorepb.Value)
+	count := value.GetIntegerValue()
 	return &count, nil
 }
