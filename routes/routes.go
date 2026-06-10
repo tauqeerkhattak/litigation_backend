@@ -22,6 +22,7 @@ func SetupRoutes(e *echo.Group) {
 				users.POST("/:uid/forgot-password", controllers.ForgotPasswordUser)
 			}
 			authAdmin.GET("/dashboard", controllers.AdminDashboadData)
+			authAdmin.GET("/cases", controllers.GetAllCases)
 		}
 	}
 }

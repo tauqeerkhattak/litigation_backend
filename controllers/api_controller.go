@@ -91,3 +91,11 @@ func AdminDashboadData(c echo.Context) error {
 	}
 	return responses.SuccessResponse(c, data)
 }
+
+func GetAllCases(c echo.Context) error {
+	data, err := services.GetAllCases()
+	if err != nil {
+		return responses.ErrorResponse(c, 500, err.Error())
+	}
+	return responses.SuccessResponse(c, data)
+}

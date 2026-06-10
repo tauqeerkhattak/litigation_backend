@@ -85,3 +85,18 @@ func GetCasesCount() (*int64, error) {
 	count := value.GetIntegerValue()
 	return &count, nil
 }
+
+func GetAllCases() ([]*responses.CaseModel, error) {
+	iter := config.Firestore.Collection("cases").Documents(context.Background())
+	documents, err := iter.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	cases := make([]*responses.CaseModel, 0)
+	for _, doc := range documents {
+		data := doc.Data()
+		caseModel := responses.CaseModelFromJson(data)
+		cases = append(cases, &caseModel)
+	}
+	return cases, nil
+}
