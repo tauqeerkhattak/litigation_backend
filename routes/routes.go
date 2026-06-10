@@ -21,6 +21,7 @@ func SetupRoutes(e *echo.Group) {
 				users.DELETE("/:uid", controllers.DisableUser)
 				users.POST("/:uid/forgot-password", controllers.ForgotPasswordUser)
 			}
+			authAdmin.GET("/dashboard", controllers.AdminDashboadData)
 		}
 	}
 }

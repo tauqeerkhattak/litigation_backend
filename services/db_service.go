@@ -1,0 +1,83 @@
+package services
+
+import (
+	"context"
+	"litigation_backend/config"
+	"litigation_backend/models/requests"
+	"litigation_backend/models/responses"
+	"time"
+)
+
+func CreateUserInDb(uid string, request *requests.CreateUserRequest) (*responses.User, error) {
+	user := responses.User{
+		Uid:       uid,
+		Email:     request.Email,
+		Name:      request.Name,
+		Role:      request.Role,
+		Disabled:  false,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+	_, err := config.Firestore.Collection("users").Doc(uid).Set(context.Background(), user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func GetAllUserFromDb() ([]*responses.User, error) {
+	iter := config.Firestore.Collection("users").Documents(context.Background())
+	documents, err := iter.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	users := make([]*responses.User, 0)
+	for _, doc := range documents {
+		data := doc.Data()
+		user := responses.UserFromJson(data)
+		users = append(users, &user)
+	}
+	return users, nil
+}
+
+func DisableUserInDb(uid string) (*responses.User, error) {
+	user, err := GetUserByUid(uid)
+	if err != nil {
+		return nil, err
+	}
+	user.Disabled = true
+	_, err = config.Firestore.Collection("users").Doc(uid).Set(context.Background(), user)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func GetUserByUid(uid string) (*responses.User, error) {
+	doc, err := config.Firestore.Collection("users").Doc(uid).Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	user := responses.UserFromJson(doc.Data())
+	return &user, nil
+}
+
+func GetUserCount() (*int, error) {
+	query := config.Firestore.Collection("users").NewAggregationQuery().WithCount("count")
+	data, err := query.Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	count := data["count"].(int)
+	return &count, nil
+}
+
+func GetCasesCount() (*int, error) {
+	query := config.Firestore.Collection("cases").NewAggregationQuery().WithCount("count")
+	data, err := query.Get(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	count := data["count"].(int)
+	return &count, nil
+}

@@ -46,13 +46,11 @@ func AdminLogin(c echo.Context) error {
 }
 
 func GetAllUsers(c echo.Context) error {
-	pageToken := c.QueryParam("page_token")
-	users, pageToken := services.GetAllUsers(pageToken)
-	return c.JSON(200, echo.Map{
-		"status":          "success",
-		"users":           users,
-		"next_page_token": pageToken,
-	})
+	users, err := services.GetAllUserFromDb()
+	if err != nil {
+		return responses.ErrorResponse(c, 500, err.Error())
+	}
+	return c.JSON(200, users)
 }
 
 func CreateUser(c echo.Context) error {
@@ -84,4 +82,12 @@ func ForgotPasswordUser(c echo.Context) error {
 		return responses.ErrorResponse(c, 500, err.Error())
 	}
 	return responses.SuccessResponse(c, "Email send to: "+*email)
+}
+
+func AdminDashboadData(c echo.Context) error {
+	data, err := services.AdminDashboardData()
+	if err != nil {
+		return responses.ErrorResponse(c, 500, err.Error())
+	}
+	return responses.SuccessResponse(c, data)
 }
