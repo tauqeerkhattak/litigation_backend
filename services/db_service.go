@@ -12,13 +12,15 @@ import (
 
 func CreateUserInDb(uid string, request *requests.CreateUserRequest) (*responses.User, error) {
 	user := responses.User{
-		Uid:       uid,
-		Email:     request.Email,
-		Name:      request.Name,
-		Role:      request.Role,
-		Disabled:  false,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		Uid:         uid,
+		Email:       request.Email,
+		Name:        request.Name,
+		Role:        request.Role,
+		CountryCode: request.CountryCode,
+		PhoneNumber: request.PhoneNumber,
+		Disabled:    false,
+		CreatedAt:   time.Now(),
+		UpdatedAt:   time.Now(),
 	}
 	_, err := config.Firestore.Collection("users").Doc(uid).Set(context.Background(), user)
 	if err != nil {

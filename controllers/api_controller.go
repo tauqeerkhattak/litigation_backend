@@ -10,7 +10,11 @@ import (
 )
 
 func TestWhatsapp(c echo.Context) error {
-	err := services.TestWhatsapp()
+	phoneNumber := c.QueryParam("phone_number")
+	if phoneNumber == "" {
+		return responses.ErrorResponse(c, 400, "Phone Number is required in query param!")
+	}
+	err := services.SendWhatsappReminder(phoneNumber)
 	if err != nil {
 		return c.JSON(500, echo.Map{
 			"status":  "error",

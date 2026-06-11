@@ -8,28 +8,43 @@ import (
 	"litigation_backend/models/responses"
 	"log"
 	"os"
+	"time"
 
 	"firebase.google.com/go/v4/auth"
 	"github.com/wneessen/go-mail"
 )
 
-func TestWhatsapp() error {
-	phoneNumberId := os.Getenv("WHATSAPP_PHONE_NUMBER_ID")
-	url := "https://graph.facebook.com/v25.0/" + phoneNumberId + "/messages"
-	body := map[string]any{
-		"messaging_product": "whatsapp",
-		"to":                "+923702260602",
-		"type":              "template",
-		"template": map[string]any{
-			"name":     "hello_world",
-			"language": map[string]any{"code": "en_US"},
-		},
-	}
-	err, response := POST(url, body)
+var SECONDS_IN_3_DAYS = 259200
+
+func CheckCasesAndSendReminders() error {
+	cases, err := GetAllCases()
 	if err != nil {
 		return err
 	}
-	log.Println("RESPONSE: ", response)
+	for _, caseModel := range cases {
+		nextHearing := caseModel.NextHearing
+		if nextHearing == nil {
+			continue
+		}
+		userId := caseModel.UserId
+		if userId == nil {
+			log.Println("FOR CASE: "+caseModel.CaseNo+", USER ID NOT FOUND!", time.Now())
+			continue
+		}
+		now := time.Now().Add(time.Hour * 24 * 3)
+		if now.Day() == nextHearing.Day() && now.Month() == nextHearing.Month() && now.Year() == nextHearing.Year() {
+			user, err := GetUserByUid(*userId)
+			if err != nil {
+				log.Println("FOR CASE: "+caseModel.CaseNo+", COULD NOT GET USER, ERROR: ", err.Error())
+				continue
+			}
+			phoneNumber := user.CountryCode + user.PhoneNumber
+			err = SendWhatsappReminder(phoneNumber)
+			if err != nil {
+				log.Println("FOR CASE: "+caseModel.CaseNo+", COULD NOT SEND REMINDER, ERROR: ", err.Error())
+			}
+		}
+	}
 	return nil
 }
 

@@ -53,9 +53,10 @@ func main() {
 	}
 	host := os.Getenv("HOST_URL")
 	cronJob := cron.New()
+	defer cronJob.Stop()
 	cronJob.AddFunc("0 8 * * *", func() {
 		log.Println("Running at: ", time.Now())
-		services.TestWhatsapp()
+		services.CheckCasesAndSendReminders()
 	})
 	cronJob.Start()
 	log.Println("CronJob started!")

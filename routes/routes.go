@@ -8,12 +8,12 @@ import (
 )
 
 func SetupRoutes(e *echo.Group) {
-	e.POST("/test-whatsapp", controllers.TestWhatsapp)
 	admin := e.Group("/admin")
 	{
 		admin.POST("/login", controllers.AdminLogin)
 		authAdmin := admin.Group("", services.VerifyJWTToken)
 		{
+			authAdmin.GET("/test-whatsapp", controllers.TestWhatsapp)
 			users := authAdmin.Group("/users")
 			{
 				users.GET("", controllers.GetAllUsers)
