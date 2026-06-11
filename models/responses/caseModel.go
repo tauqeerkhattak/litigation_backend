@@ -4,8 +4,8 @@ import "time"
 
 func CaseModelFromJson(data map[string]any) CaseModel {
 	return CaseModel{
-		Id:           data["id"].(string),
-		UserId:       data["user_id"].(string),
+		Id:           data["id"].(*string),
+		UserId:       data["user_id"].(*string),
 		CaseNo:       data["case_no"].(string),
 		Year:         int(data["year"].(int64)),
 		Court:        Court(data["court"].(string)),
@@ -26,8 +26,8 @@ func CaseModelFromJson(data map[string]any) CaseModel {
 }
 
 type CaseModel struct {
-	Id           string        `json:"id" firestore:"id"`
-	UserId       string        `json:"user_id" firestore:"user_id"`
+	Id           *string       `json:"id" firestore:"id"`
+	UserId       *string       `json:"user_id" firestore:"user_id"`
 	CaseNo       string        `json:"case_no" firestore:"case_no"`
 	Year         int           `json:"year" firestore:"year"`
 	Court        Court         `json:"court" firestore:"court"`

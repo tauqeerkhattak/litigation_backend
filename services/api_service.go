@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"litigation_backend/config"
 	"litigation_backend/models/requests"
 	"litigation_backend/models/responses"
@@ -33,6 +34,9 @@ func TestWhatsapp() error {
 }
 
 func CreateUser(request *requests.CreateUserRequest) (*responses.User, error) {
+	if request.Role == requests.UserRole("admin") {
+		return nil, errors.New("Cannot create admin!")
+	}
 	userToCreate := (&auth.UserToCreate{})
 	userToCreate.Email(request.Email)
 	userToCreate.Password(request.Password)
