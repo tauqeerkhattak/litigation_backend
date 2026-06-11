@@ -19,7 +19,7 @@ func HearingFromMap(data map[string]any) Hearing {
 	return Hearing{
 		Id:        utils.HandleNil[string](data["id"]),
 		CaseId:    data["case_id"].(string),
-		Date:      data["data"].(time.Time),
+		Date:      data["date"].(time.Time),
 		Submitted: data["submitted"].(string),
 		Happened:  data["happened"].(string),
 		Order:     data["order"].(string),
