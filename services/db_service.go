@@ -96,7 +96,27 @@ func GetAllCases() ([]*responses.CaseModel, error) {
 	for _, doc := range documents {
 		data := doc.Data()
 		caseModel := responses.CaseModelFromJson(data)
-		cases = append(cases, &caseModel)
+		hearings, err := getAllHearings(doc.Ref.ID)
+		if err != nil {
+			cases = append(cases, &caseModel)
+		} else {
+			caseModel.Hearings = append(caseModel.Hearings, *hearings...)
+			cases = append(cases, &caseModel)
+		}
 	}
 	return cases, nil
+}
+
+func getAllHearings(caseId string) (*[]responses.Hearing, error) {
+	iter := config.Firestore.Collection("hearings").Where("case_id", "==", caseId).Documents(context.Background())
+	documents, err := iter.GetAll()
+	if err != nil {
+		return nil, err
+	}
+	hearings := make([]responses.Hearing, 0)
+	for _, doc := range documents {
+		hearing := responses.HearingFromMap(doc.Data())
+		hearings = append(hearings, hearing)
+	}
+	return &hearings, nil
 }

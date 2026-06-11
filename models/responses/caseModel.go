@@ -1,27 +1,43 @@
 package responses
 
-import "time"
+import (
+	"litigation_backend/utils"
+	"time"
+)
 
 func CaseModelFromJson(data map[string]any) CaseModel {
+	plaintiffs := make([]string, 0)
+	if data["plaintiffs"] != nil {
+		for _, plaintiff := range data["plaintiffs"].([]any) {
+			plaintiffs = append(plaintiffs, plaintiff.(string))
+		}
+	}
+	respondents := make([]string, 0)
+	if data["respondents"] != nil {
+		for _, respondent := range data["respondents"].([]any) {
+			respondents = append(respondents, respondent.(string))
+		}
+	}
 	return CaseModel{
-		Id:           data["id"].(*string),
-		UserId:       data["user_id"].(*string),
+		Id:           utils.HandleNil[string](data["id"]),
+		UserId:       utils.HandleNil[string](data["user_id"]),
 		CaseNo:       data["case_no"].(string),
 		Year:         int(data["year"].(int64)),
 		Court:        Court(data["court"].(string)),
 		Bench:        Bench(data["bench"].(string)),
 		Title:        data["title"].(string),
-		Plaintiffs:   data["plaintiffs"].([]string),
-		Respondents:  data["respondents"].([]string),
-		FirstHearing: toTimePtr(data["first_hearing"]),
-		LastHearing:  toTimePtr(data["last_hearing"]),
-		NextHearing:  toTimePtr(data["next_hearing"]),
+		Plaintiffs:   plaintiffs,
+		Respondents:  respondents,
+		FirstHearing: utils.ToTimePtr(data["first_hearing"]),
+		LastHearing:  utils.ToTimePtr(data["last_hearing"]),
+		NextHearing:  utils.ToTimePtr(data["next_hearing"]),
 		Status:       CaseStatus(data["status"].(string)),
 		Notes:        data["notes"].(string),
-		CaseNature:   CaseNature(data["case_nature"].(string)),
-		Department:   Department(data["department"].(string)),
-		Taluka:       Taluka(data["taluka"].(string)),
+		CaseNature:   utils.ToConst[CaseNature](data["case_nature"]),
+		Department:   utils.ToConst[Department](data["department"]),
+		Taluka:       utils.ToConst[Taluka](data["taluka"]),
 		Documents:    toAppDocumentSlice(data["documents"].([]any)),
+		Hearings:     make([]Hearing, 0),
 	}
 }
 
@@ -40,10 +56,11 @@ type CaseModel struct {
 	NextHearing  *time.Time    `json:"next_hearing" firestore:"next_hearing"`
 	Status       CaseStatus    `json:"status" firestore:"status"`
 	Notes        string        `json:"notes" firestore:"notes"`
-	CaseNature   CaseNature    `json:"case_nature" firestore:"case_nature"`
-	Department   Department    `json:"department" firestore:"department"`
-	Taluka       Taluka        `json:"taluka" firestore:"taluka"`
+	CaseNature   *CaseNature   `json:"case_nature" firestore:"case_nature"`
+	Department   *Department   `json:"department" firestore:"department"`
+	Taluka       *Taluka       `json:"taluka" firestore:"taluka"`
 	Documents    []AppDocument `json:"documents" firestore:"documents"`
+	Hearings     []Hearing     `json:"hearings"`
 }
 
 type Court string
@@ -112,23 +129,15 @@ const (
 	dismissed   CaseStatus = "dismissed"
 )
 
-func toTimePtr(t any) *time.Time {
-	if t == nil {
-		return nil
-	}
-	timeValue := t.(time.Time)
-	return &timeValue
-}
-
 func toAppDocumentSlice(data []any) []AppDocument {
 	documents := make([]AppDocument, 0)
 	for _, doc := range data {
 		docMap := doc.(map[string]any)
 		document := AppDocument{
 			Id:         docMap["id"].(string),
-			Type:       DocumentType(docMap["type"].(string)),
+			Type:       utils.ToConst[DocumentType](docMap["type"]),
 			Name:       docMap["name"].(string),
-			Url:        docMap["url"].(string),
+			Url:        docMap["file_name"].(string),
 			UploadedAt: docMap["uploaded_at"].(time.Time),
 		}
 		documents = append(documents, document)
