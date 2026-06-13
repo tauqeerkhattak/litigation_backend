@@ -42,11 +42,7 @@ func AdminLogin(c echo.Context) error {
 	if err != nil {
 		return responses.ErrorResponse(c, 500, "Failed to generate token")
 	}
-	return c.JSON(200, echo.Map{
-		"status":  "success",
-		"message": "Login successful",
-		"token":   *token,
-	})
+	return responses.SuccessResponse(c, token)
 }
 
 func GetAllUsers(c echo.Context) error {
